@@ -1,12 +1,7 @@
 """
-Métodos de reservas de siniestros sobre triángulos de desarrollo.
+Chain Ladder, Mack (1993) y bootstrap ODP (England y Verrall, 2002).
 
-- Chain Ladder determinista.
-- Modelo de Mack (1993): error cuadrático medio de predicción por año y total.
-- Bootstrap ODP (England y Verrall, 2002): distribución completa de la reserva.
-
-Convención: un triángulo es un np.ndarray de tamaño (I, J) con np.nan en las
-celdas futuras. Las filas son años de ocurrencia y las columnas, años de desarrollo.
+Los triángulos son arrays (años de ocurrencia x años de desarrollo) con NaN en las celdas futuras.
 """
 from __future__ import annotations
 
@@ -16,7 +11,6 @@ import numpy as np
 import pandas as pd
 
 
-# --------------------------------------------------------------------------- utilidades
 def to_cumulative(incremental: np.ndarray) -> np.ndarray:
     """Pasa un triángulo incremental a acumulado (respeta los NaN futuros)."""
     cum = np.nancumsum(incremental, axis=1)
@@ -36,7 +30,6 @@ def latest_diagonal(cumulative: np.ndarray) -> np.ndarray:
     return np.array([row[~np.isnan(row)][-1] for row in cumulative])
 
 
-# --------------------------------------------------------------------------- Chain Ladder
 def development_factors(cumulative: np.ndarray) -> np.ndarray:
     """Factores de desarrollo ponderados por volumen: f_j = sum C_{i,j+1} / sum C_{i,j}."""
     n_dev = cumulative.shape[1]
@@ -82,7 +75,6 @@ def chain_ladder(cumulative: np.ndarray) -> ChainLadderResult:
     return ChainLadderResult(f, full, latest, ultimate, ultimate - latest)
 
 
-# --------------------------------------------------------------------------- Mack
 @dataclass
 class MackResult:
     chain_ladder: ChainLadderResult
@@ -146,7 +138,6 @@ def mack(cumulative: np.ndarray) -> MackResult:
     return MackResult(cl, sigma2, np.sqrt(mse), float(np.sqrt(total_mse)))
 
 
-# --------------------------------------------------------------------------- Bootstrap ODP
 @dataclass
 class BootstrapResult:
     reserves_by_origin: np.ndarray  # (n_sims, n_orig)
